@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.24;
 
+
+
 // Uncomment this line to use console.log
 // import "hardhat/console.sol";
 
@@ -8,6 +10,7 @@ contract Lock {
     uint public unlockTime;
     address payable public owner;
 
+    // emits an event when the contract is deployed
     event Withdrawal(uint amount, uint when);
 
     constructor(uint _unlockTime) payable {
@@ -18,6 +21,7 @@ contract Lock {
 
         unlockTime = _unlockTime;
         owner = payable(msg.sender);
+
     }
 
     function withdraw() public {
