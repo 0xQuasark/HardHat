@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.24;
-
+pragma solidity ^0.8.0;
 
 
 // Uncomment this line to use console.log
@@ -29,7 +28,7 @@ contract Lock {
         // console.log("Unlock time is %o and block timestamp is %o", unlockTime, block.timestamp);
 
         require(block.timestamp >= unlockTime, "You can't withdraw yet");
-        require(msg.sender == owner, "You aren't the owner");
+        require(msg.sender == owner, "You aren't the owner"); // second argument is the error message
 
         emit Withdrawal(address(this).balance, block.timestamp);
 
