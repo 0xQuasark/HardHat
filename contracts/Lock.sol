@@ -19,7 +19,7 @@ contract Lock {
         );
 
         unlockTime = _unlockTime;
-        owner = payable(msg.sender);
+        owner = payable(msg.sender); // the owner is the address that deploys the contract
 
     }
 
