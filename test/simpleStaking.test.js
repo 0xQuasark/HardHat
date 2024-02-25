@@ -15,18 +15,19 @@ describe("Staking", function () {
 
     // Contracts are deployed using the first signer/account by default
     const [owner, otherAccount] = await ethers.getSigners();
-    console.log("Owner details: ", owner);
-    console.log("otherAccount details: ", otherAccount);
+    // console.log("Owner details: ", owner);
+    // console.log("otherAccount details: ", otherAccount);
 
     const Staking = await ethers.getContractFactory("Staking");
-    const staking = await Staking.deploy(lockedAmount);
+    // const staking = await Staking.deploy(lockedAmount);
 
-    return staking;
+    return Staking;
   }
 
   describe("Test begins", function () {
     it("Placholder for now", async function () {
       const staking = await loadFixture(initStaking);
+      console.log(staking);
     });
   });
 });
