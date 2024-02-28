@@ -21,7 +21,7 @@ describe("Staking", function () {
     const Staking = await ethers.getContractFactory("Staking");
     const staking = await Staking.deploy();
 
-    return Staking;
+    return staking;
   }
 
   describe("Test begins", function () {
