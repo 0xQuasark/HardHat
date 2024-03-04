@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.0;
 
+error MinimumBalanceNotMet(string errorMessage);
+
 contract Staking {
   uint256 public totalStaked;
 
@@ -22,7 +24,11 @@ contract Staking {
 
   // Function to accept stakes
   function stake() public payable {
-    require(msg.value > 0, "You need to stake at least some Ether");
+    // require(msg.value > 0, "You need to stake at least some Ether");
+    if (msg.value == 0 ) {
+      revert MinimumBalanceNotMet("You need to stake at least some Ether");
+    }
+    
     totalStaked += msg.value;
     emit Staked(msg.sender, msg.value);
   }
