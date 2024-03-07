@@ -53,6 +53,7 @@ i might stake 100wei, h could stake 200wei
 once we've staked our amounts, and then need to withdraw, i should be able to withdraw up to our staked balanced
 new concept: manage the state of 
 
+
 withdrawAll() // start here?
 withdrawSpecfic()
 
