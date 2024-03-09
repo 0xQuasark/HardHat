@@ -23,11 +23,16 @@ describe.only("Staking", function () {
       expect(await staking.totalStaked()).to.equal(0);
     });
 
-    it("Should stake", async function () {
+  it("Should stake", async function () {
       const { staking, owner } = await loadFixture(deployStakingFixture);
 
       await expect(staking.stake({value: 100})).to.emit(staking, "Staked").withArgs( owner, 100);
-      expect(await staking.totalStaked()).to.equal(100);
+
+      // expect(await staking.totalStaked()).to.equal(100);
+      // the below replicates the above
+      let result = await staking.totalStaked();
+      expect(result).to.equal(100);
+
     })
 
     it("Should complain because no Ether is staked", async function () {
@@ -41,7 +46,24 @@ describe.only("Staking", function () {
       ).withArgs("You need to stake at least some Ether");
     });
 
-    // it("Should check an event error because no eth staked", async )
+    // it("Should complain because no Ether is staked", async function () {
+    // });
+
+    it("Should return staked balance by user once off", async function () {
+      const { staking, owner } = await loadFixture(deployStakingFixture);
+
+      await staking.stake({value: 100});
+      expect(await staking.getUserStake(owner)).to.equal(100);
+    });
+
+    it("Should return staked balance after upping it", async function () {
+      const { staking, owner } = await loadFixture(deployStakingFixture);
+
+      await staking.stake({value: 100});
+      await staking.stake({value: 200});
+      expect(await staking.getUserStake(owner)).to.equal(300);
+    });
+
   });
 });
 

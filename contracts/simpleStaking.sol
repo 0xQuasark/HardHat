@@ -1,11 +1,13 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.0;
+import "hardhat/console.sol";
 
 error MinimumBalanceNotMet(string errorMessage);
 
 contract Staking {
   uint256 public totalStaked;
-
+  mapping(address => uint256) public userStakes; // mapping to keep trace of who sends what
+ 
   // This line of code is an event declaration. In Solidity, events are used to log transactions on the Ethereum blockchain.
   // They are inheritable members of contracts. When you call them, they cause the arguments to be stored in the transaction’s log,
   // a special data structure in the blockchain. These logs are associated with the address of the contract and are incorporated into
@@ -30,13 +32,19 @@ contract Staking {
     }
     
     totalStaked += msg.value;
+    userStakes[msg.sender] += msg.value; // apparently 0.8.0 and above it's safe to add like this
     emit Staked(msg.sender, msg.value);
+    // console.log("Sender: ", msg.sender, "Amount: ", msg.value);
   }
 
   // Function to check the contract's balance
   // This is equal to the total staked amount if no other Ether transactions occur
   function getContractBalance() public view returns (uint256) {
     return address(this).balance;
+  }
+
+  function getUserStake(address user) public view returns (uint256) {
+    return userStakes[user];
   }
 
 }
