@@ -3,6 +3,7 @@ pragma solidity ^0.8.0;
 import "hardhat/console.sol";
 
 error MinimumBalanceNotMet(string errorMessage);
+error InsufficientFundsToWithdraw(string errorMessage);
 
 contract Staking {
   uint256 public totalStaked;
@@ -34,7 +35,6 @@ contract Staking {
     totalStaked += msg.value;
     userStakes[msg.sender] += msg.value; // apparently 0.8.0 and above it's safe to add like this
     emit Staked(msg.sender, msg.value);
-    // console.log("Sender: ", msg.sender, "Amount: ", msg.value);
   }
 
   // Function to check the contract's balance
@@ -47,5 +47,17 @@ contract Staking {
     return userStakes[user];
   }
 
+  function withdraw(uint256 amount) public payable {
+    // console.log("Sender:", msg.sender);
+    // console.log(userStakes[msg.sender]);
+    if (userStakes[msg.sender] < amount) {
+      revert InsufficientFundsToWithdraw("You do not have enough funds to withdraw");
+    }
+    if (amount == 0) {
+      console.log('draining all funds');
+    } else {
+      console.log('draining specific amount: ', amount);
+    }
+  }
 }
 
