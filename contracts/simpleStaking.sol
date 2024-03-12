@@ -53,9 +53,10 @@ contract Staking {
     if (userStakes[msg.sender] < amount) {
       revert InsufficientFundsToWithdraw("You do not have enough funds to withdraw");
     }
-    if (amount != 0) {
+    if (amount == 0) {
+      amount = userStakes[msg.sender];
       console.log('draining all funds');
-      console.log('pre drain staked: ', userStakes[msg.sender], amount);
+      console.log('pre drain staked: ', userStakes[msg.sender]);
       userStakes[msg.sender] -= amount;
       console.log('post drain staked: ', userStakes[msg.sender]);
     } else {
