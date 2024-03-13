@@ -65,25 +65,33 @@ describe.only("Staking", function () {
       // console.log(await staking.getContractBalance());
     });
 
-    it("Should have all my funds withdrawn", async function () {
-      const { staking } = await loadFixture(deployStakingFixture);
-      await staking.stake({value: 100});
-
-      //To do: add checks on messages returned
-      await staking.withdraw(0);
-
-    });
-
     it("Should fail because there's not enough balance to withdraw", async function () {
       const { staking } = await loadFixture(deployStakingFixture);
       await staking.stake({value: 100});
-
+      
       await expect(staking.withdraw(1000)).to.be.revertedWithCustomError(
         staking,
         "InsufficientFundsToWithdraw"
-      );
-
+        );    
     });
+
+    it("Should have all my funds withdrawn", async function () {
+      const { staking, owner } = await loadFixture(deployStakingFixture);
+      await staking.stake({value: 100});
+
+      await staking.withdraw(0);
+      expect(await staking.getUserStake(owner)).to.equal(0);
+    });
+
+    it("Should have SOME my funds withdrawn", async function () {
+      const { staking, owner } = await loadFixture(deployStakingFixture);
+      await staking.stake({value: 100});
+
+      await staking.withdraw(50);
+      await staking.withdraw(20);
+      expect(await staking.getUserStake(owner)).to.equal(30);
+    });
+
 
   });
 });

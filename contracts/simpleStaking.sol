@@ -47,6 +47,9 @@ contract Staking {
     return userStakes[user];
   }
 
+
+  //To do: return status messages
+
   function withdraw(uint256 amount) public payable {
     // console.log("Sender:", msg.sender);
     // console.log(userStakes[msg.sender]);
@@ -54,13 +57,14 @@ contract Staking {
       revert InsufficientFundsToWithdraw("You do not have enough funds to withdraw");
     }
     if (amount == 0) {
-      amount = userStakes[msg.sender];
-      console.log('draining all funds');
-      console.log('pre drain staked: ', userStakes[msg.sender]);
+      // console.log('draining all funds');
+      amount = userStakes[msg.sender];  // setting amount to the entire balance
+      // console.log('pre drain staked: ', userStakes[msg.sender]);
       userStakes[msg.sender] -= amount;
-      console.log('post drain staked: ', userStakes[msg.sender]);
+      // console.log('post drain staked: ', userStakes[msg.sender]);
     } else {
-      console.log('draining specific amount: ', amount);
+      // console.log('draining specific amount: ', amount);
+      userStakes[msg.sender] -= amount;
     }
   }
 }
