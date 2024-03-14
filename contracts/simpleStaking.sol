@@ -16,7 +16,8 @@ contract Staking {
   // This specific event, `Staked`, is used to log the details whenever a user stakes some amount in this contract.
   // It is indexed by the user's address, which allows for easier searching and filtering for specific transactions involving staking by a user.
   // The `amount` parameter records the quantity of tokens or cryptocurrency that was staked.
-  event Staked(address indexed user, uint256 amount); // event to log the staking
+  event Staked(address indexed user, uint256 amount);   // event to log the staking
+  event Withdrawn (address indexed user, uint256);      // event for the withdrawal
 
   // This is a constructor function. It is a special function that is executed only once when the contract is created.
   // It is used to initialize the contract's state, and is often used to set the initial values of the contract's variables.
@@ -26,7 +27,7 @@ contract Staking {
   }
 
   // Function to accept stakes
-  function stake() public payable {
+  function stake() external payable {
     // require(msg.value > 0, "You need to stake at least some Ether");
     if (msg.value == 0 ) {
       revert MinimumBalanceNotMet("You need to stake at least some Ether");
@@ -50,22 +51,19 @@ contract Staking {
 
   //To do: return status messages
 
-  function withdraw(uint256 amount) public payable {
+  function withdraw(uint256 amount) external  {
     // console.log("Sender:", msg.sender);
     // console.log(userStakes[msg.sender]);
     if (userStakes[msg.sender] < amount) {
       revert InsufficientFundsToWithdraw("You do not have enough funds to withdraw");
     }
     if (amount == 0) {
-      // console.log('draining all funds');
       amount = userStakes[msg.sender];  // setting amount to the entire balance
-      // console.log('pre drain staked: ', userStakes[msg.sender]);
-      userStakes[msg.sender] -= amount;
-      // console.log('post drain staked: ', userStakes[msg.sender]);
-    } else {
-      // console.log('draining specific amount: ', amount);
-      userStakes[msg.sender] -= amount;
     }
+      payable(msg.sender).transfer(amount);
+      userStakes[msg.sender] -= amount;
+      totalStaked -= amount;
+      emit Withdrawn(msg.sender, amount)
   }
 }
 
