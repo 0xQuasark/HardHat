@@ -4,6 +4,7 @@ import "hardhat/console.sol";
 
 error MinimumBalanceNotMet(string errorMessage);
 error InsufficientFundsToWithdraw(string errorMessage);
+bool private locked;
 
 contract Staking {
   uint256 public totalStaked;
@@ -52,6 +53,9 @@ contract Staking {
   //To do: return status messages
 
   function withdraw(uint256 amount) external  {
+    require(!locked, "No re-entrancy");
+    locked = true;
+
     // console.log("Sender:", msg.sender);
     // console.log(userStakes[msg.sender]);
     if (userStakes[msg.sender] < amount) {
@@ -60,10 +64,12 @@ contract Staking {
     if (amount == 0) {
       amount = userStakes[msg.sender];  // setting amount to the entire balance
     }
-      payable(msg.sender).transfer(amount);
-      userStakes[msg.sender] -= amount;
-      totalStaked -= amount;
-      emit Withdrawn(msg.sender, amount)
+    payable(msg.sender).transfer(amount);
+    userStakes[msg.sender] -= amount;
+    totalStaked -= amount;
+    emit Withdrawn(msg.sender, amount)
+
+    locked = false;
   }
 }
 
