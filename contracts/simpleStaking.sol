@@ -56,8 +56,6 @@ contract Staking {
     require(!locked, "No re-entrancy");
     locked = true;
 
-    // console.log("Sender:", msg.sender);
-    // console.log(userStakes[msg.sender]);
     if (userStakes[msg.sender] < amount) {
       revert InsufficientFundsToWithdraw("You do not have enough funds to withdraw");
     }
