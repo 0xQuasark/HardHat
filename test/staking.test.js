@@ -46,9 +46,6 @@ describe.only("Staking", function () {
       ).withArgs("You need to stake at least some Ether");
     });
 
-    // it("Should complain because no Ether is staked", async function () {
-    // });
-
     it("Should return staked balance by user once off", async function () {
       const { staking, owner } = await loadFixture(deployStakingFixture);
 
