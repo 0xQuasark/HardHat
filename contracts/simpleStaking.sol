@@ -49,9 +49,6 @@ contract Staking {
     return userStakes[user];
   }
 
-
-  //To do: return status messages
-
   function withdraw(uint256 amount) external  {
     require(!locked, "No re-entrancy");
     locked = true;
