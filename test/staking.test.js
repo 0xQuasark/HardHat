@@ -8,12 +8,14 @@ const { expect } = require("chai");
 describe.only("Staking", function () {
   async function deployStakingFixture() {
     // Contracts are deployed using the first signer/account by default
-    const [owner, otherAccount] = await ethers.getSigners();
+    const signers = await ethers.getSigners();
+    // const [owner, otherAccount] = await ethers.getSigners();
+    const [owner, otherAccount ] = signers; // owner is sometimes called deployer
 
     const Staking = await ethers.getContractFactory("Staking");
     const staking = await Staking.deploy();
 
-    return { staking, owner, otherAccount };
+    return { staking, owner, otherAccount, signers };
   }
 
   describe("Deployment", function () {
@@ -84,26 +86,38 @@ describe.only("Staking", function () {
       const { staking, owner } = await loadFixture(deployStakingFixture);
       await staking.stake({value: 100});
 
-      await staking.withdraw(50);
-      await staking.withdraw(20);
+      await expect(staking.withdraw(50)).to.emit(
+        staking,
+        "Withdrawn"
+      ).withArgs(owner, 50);
+
+      await expect(staking.withdraw(20)).to.emit(
+        staking,
+        "Withdrawn"
+      ).withArgs(owner, 20);
       expect(await staking.getUserStake(owner)).to.equal(30);
+
     });
 
+    it("Should support multiple stakers", async function () {
+      const { staking, owner, signers } = await loadFixture(deployStakingFixture);
+
+      await staking.connect(signers[1]).stake({ value: 30 });
+      await staking.connect(signers[2]).stake({ value: 40 });
+
+      expect(await staking.getUserStake(signers[1])).to.equal(30);
+      expect(await staking.getUserStake(signers[2])).to.equal(40);
+
+
+    });
 
   });
 });
 
 
 /*
-take complexity to next stage
-think about how to mark the amounts on a per sender basis
-i might stake 100wei, h could stake 200wei
-once we've staked our amounts, and then need to withdraw, i should be able to withdraw up to our staked balanced
-new concept: manage the state of 
+Homework
+read about connect in the docs
+play with locking and oly withdrawing after a certain time
 
-
-withdrawAll() // start here?
-withdrawSpecfic()
-
-withdraw() // 0 means withdraw all, otherwise the specific amount
 */
