@@ -1,12 +1,14 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.0;
 import "hardhat/console.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 error MinimumBalanceNotMet(string errorMessage);
 error InsufficientFundsToWithdraw(string errorMessage);
-bool private locked;
 
 contract Staking {
+  bool private locked;
+
   uint256 public totalStaked;
   mapping(address => uint256) public userStakes; // mapping to keep trace of who sends what
  
@@ -50,19 +52,21 @@ contract Staking {
   }
 
   function withdraw(uint256 amount) external  {
-    require(!locked, "No re-entrancy");
+    require(!locked, "No re-entrancy");     // check
     locked = true;
 
-    if (userStakes[msg.sender] < amount) {
+    if (userStakes[msg.sender] < amount) {  // check
       revert InsufficientFundsToWithdraw("You do not have enough funds to withdraw");
     }
-    if (amount == 0) {
-      amount = userStakes[msg.sender];  // setting amount to the entire balance
+    if (amount == 0) {                      // check
+    amount = userStakes[msg.sender];        // setting amount to the entire balance
     }
-    payable(msg.sender).transfer(amount);
-    userStakes[msg.sender] -= amount;
-    totalStaked -= amount;
-    emit Withdrawn(msg.sender, amount)
+    userStakes[msg.sender] -= amount;       // effect
+    totalStaked -= amount;                  // effect
+
+    payable(msg.sender).transfer(amount); // interaction
+
+    emit Withdrawn(msg.sender, amount);
 
     locked = false;
   }
