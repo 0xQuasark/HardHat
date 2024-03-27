@@ -5,7 +5,7 @@ const {
 const { anyValue } = require("@nomicfoundation/hardhat-chai-matchers/withArgs");
 const { expect } = require("chai");
 
-describe.only("Staking", function () {
+describe("Staking", function () {
   async function deployStakingFixture() {
     // Contracts are deployed using the first signer/account by default
     const signers = await ethers.getSigners();
@@ -107,8 +107,23 @@ describe.only("Staking", function () {
 
       expect(await staking.getUserStake(signers[1])).to.equal(30);
       expect(await staking.getUserStake(signers[2])).to.equal(40);
+    });
 
-
+    it.only("Should not allow to withdraw before the waiting period", async function () {
+      const { staking, owner } = await loadFixture(deployStakingFixture); 
+      // Stake some Ether 
+      const WAITING_PERIOD = await staking.WAITING_PERIOD();
+      // console.log("WAITING_PERIOD: ", WAITING_PERIOD)
+      // Attempt to withdraw immediately (should fail) 
+      await staking.stake({ value: 10 }); 
+      // Increase time by the waiting period 
+      await expect(staking.withdraw(10)).to.be.revertedWithCustomError(
+        staking,
+        "WithdrawalLocked"
+        ); 
+      // Attempt to withdraw after the waiting period (should succeed) 
+      await time.increase(WAITING_PERIOD); 
+      await expect(staking.withdraw(10)).not.to.be.reverted;
     });
 
   });
