@@ -5,39 +5,34 @@ import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 error MinimumBalanceNotMet(string errorMessage);
 error InsufficientFundsToWithdraw(string errorMessage);
+error WithdrawalLocked(string errorMessage);
 
 contract Staking is ReentrancyGuard {
   // bool private locked;
 
   uint256 public totalStaked;
-  mapping(address => uint256) public userStakes; // mapping to keep trace of who sends what
- 
-  // This line of code is an event declaration. In Solidity, events are used to log transactions on the Ethereum blockchain.
-  // They are inheritable members of contracts. When you call them, they cause the arguments to be stored in the transaction’s log,
-  // a special data structure in the blockchain. These logs are associated with the address of the contract and are incorporated into
-  // the blockchain, allowing the use of either the contract’s address or the transaction’s hash to retrieve them later.
-  // This specific event, `Staked`, is used to log the details whenever a user stakes some amount in this contract.
-  // It is indexed by the user's address, which allows for easier searching and filtering for specific transactions involving staking by a user.
-  // The `amount` parameter records the quantity of tokens or cryptocurrency that was staked.
+  uint256 public constant WAITING_PERIOD = 10 minutes;
+
+  mapping(address => uint256) public userStakes;      // mapping to keep trace of who sends what
+  mapping(address => uint256) public stakeTimestamps; // mapping to track time stamps
+
   event Staked(address indexed user, uint256 amount);   // event to log the staking
   event Withdrawn (address indexed user, uint256);      // event for the withdrawal
 
-  // This is a constructor function. It is a special function that is executed only once when the contract is created.
-  // It is used to initialize the contract's state, and is often used to set the initial values of the contract's variables.
-  // In this case, the constructor sets the `totalStaked` variable to 0 when the contract is created.
   constructor() {
     totalStaked = 0;
   }
 
   // Function to accept stakes
   function stake() external payable {
-    // require(msg.value > 0, "You need to stake at least some Ether");
     if (msg.value == 0 ) {
       revert MinimumBalanceNotMet("You need to stake at least some Ether");
     }
     
     totalStaked += msg.value;
     userStakes[msg.sender] += msg.value; // apparently 0.8.0 and above it's safe to add like this
+    stakeTimestamps[msg.sender] = block.timestamp;
+
     emit Staked(msg.sender, msg.value);
   }
 
@@ -52,14 +47,15 @@ contract Staking is ReentrancyGuard {
   }
 
   function withdraw(uint256 amount) external nonReentrant {
-    // using the nonReentrant modifier instead of the commented out 'locked' variable
-
-    // require(!locked, "No re-entrancy");     // check
-    // locked = true;
-
     if (userStakes[msg.sender] < amount) {  // check
       revert InsufficientFundsToWithdraw("You do not have enough funds to withdraw");
     }
+
+    // Check if the waiting period has passed
+    if (block.timestamp < stakeTimestamps[msg.sender] + WAITING_PERIOD) {
+      revert WithdrawalLocked("Withdrawal is locked. Please wait until the waiting period has passed.");
+    }
+
     if (amount == 0) {                      // check
     amount = userStakes[msg.sender];        // setting amount to the entire balance
     }
@@ -69,8 +65,6 @@ contract Staking is ReentrancyGuard {
     payable(msg.sender).transfer(amount); // interaction
 
     emit Withdrawn(msg.sender, amount);
-
-    // locked = false;
   }
 }
 
