@@ -77,6 +77,8 @@ describe("Staking", function () {
     it("Should have all my funds withdrawn", async function () {
       const { staking, owner } = await loadFixture(deployStakingFixture);
       await staking.stake({value: 100});
+      const WAITING_PERIOD = await staking.WAITING_PERIOD();
+      await time.increase(WAITING_PERIOD); 
 
       await staking.withdraw(0);
       expect(await staking.getUserStake(owner)).to.equal(0);
@@ -85,6 +87,8 @@ describe("Staking", function () {
     it("Should have SOME my funds withdrawn", async function () {
       const { staking, owner } = await loadFixture(deployStakingFixture);
       await staking.stake({value: 100});
+      const WAITING_PERIOD = await staking.WAITING_PERIOD();
+      await time.increase(WAITING_PERIOD); 
 
       await expect(staking.withdraw(50)).to.emit(
         staking,
@@ -109,7 +113,7 @@ describe("Staking", function () {
       expect(await staking.getUserStake(signers[2])).to.equal(40);
     });
 
-    it.only("Should not allow to withdraw before the waiting period", async function () {
+    it("Should not allow to withdraw before the waiting period", async function () {
       const { staking, owner } = await loadFixture(deployStakingFixture); 
       // Stake some Ether 
       const WAITING_PERIOD = await staking.WAITING_PERIOD();
