@@ -57,19 +57,26 @@ contract Staking is ReentrancyGuard {
     }
 
     // Check if the waiting period has passed
+    // this could be a function determineTimeEligibility()
     if (block.timestamp < stakedDetails[msg.sender].stakeTimestamps + WAITING_PERIOD) {
       revert WithdrawalLocked("Withdrawal is locked. Please wait until the waiting period has passed.");
     }
 
-    if (amount == 0) {                      // check
-    amount = stakedDetails[msg.sender].userStakes;        // setting amount to the entire balance
+    if (amount == 0) {                                 // check
+      amount = stakedDetails[msg.sender].userStakes;   // setting amount to the entire balance
     }
-    stakedDetails[msg.sender].userStakes -= amount;       // effect
-    totalStaked -= amount;                  // effect
-
-    payable(msg.sender).transfer(amount); // interaction
+    stakedDetails[msg.sender].userStakes -= amount;   // effect
+    totalStaked -= amount;                            // effect
+    console.log("Amount:", amount);
+    // i'd need to add checks and balances (a boolean to show i've already paid, etc..)
+    payable(msg.sender).transfer(amount + calculateRewards()); // interaction
 
     emit Withdrawn(msg.sender, amount);
   }
+
+  function calculateRewards() public pure returns (uint256) {
+    return 1;
+  }
+
 }
 

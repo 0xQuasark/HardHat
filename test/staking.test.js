@@ -74,14 +74,24 @@ describe("Staking", function () {
         );    
     });
 
-    it("Should have all my funds withdrawn", async function () {
+    it.only("Should have all my funds withdrawn", async function () {
       const { staking, owner } = await loadFixture(deployStakingFixture);
       await staking.stake({value: 100});
       const WAITING_PERIOD = await staking.WAITING_PERIOD();
       await time.increase(WAITING_PERIOD); 
 
-      await staking.withdraw(0);
-      expect(await staking.getUserStake(owner)).to.equal(0);
+      const balanceBefore = staking.getUserStake(owner);
+
+      const ownerBalanceBefore = await ethers.provider.getBalance(owner);
+      console.log("ownerBalanceBefore", ownerBalanceBefore);
+      const tx = await staking.withdraw(99); // find out gas 
+      console.log("balance:", await ethers.provider.getBalance(await staking.getAddress()));
+
+      expect(await ethers.provider.getBalance(owner)).to.equal(ownerBalanceBefore + 100n); // minus the gas cost
+// bigint
+      // expect(await ethers.provider.getBalance(owner)).to./
+      // const balanceAfter = staking.getUserStake(owner);
+      // expect(await staking.getUserStake(owner)).to.equal(0);
     });
 
     it("Should have SOME my funds withdrawn", async function () {
@@ -129,6 +139,7 @@ describe("Staking", function () {
       await time.increase(WAITING_PERIOD); 
       await expect(staking.withdraw(10)).not.to.be.reverted;
     });
+
 
   });
 });
