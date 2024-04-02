@@ -76,18 +76,39 @@ describe("Staking", function () {
 
     it.only("Should have all my funds withdrawn", async function () {
       const { staking, owner } = await loadFixture(deployStakingFixture);
-      await staking.stake({value: 100});
+      const result = await staking.stake({value: 100});
+      // console.log('Staking result:', result); // no gas used 
+
       const WAITING_PERIOD = await staking.WAITING_PERIOD();
       await time.increase(WAITING_PERIOD); 
 
-      const balanceBefore = staking.getUserStake(owner);
-
+      const stakingBalanceBefore = await staking.getUserStake(owner);
       const ownerBalanceBefore = await ethers.provider.getBalance(owner);
-      console.log("ownerBalanceBefore", ownerBalanceBefore);
-      const tx = await staking.withdraw(99); // find out gas 
-      console.log("balance:", await ethers.provider.getBalance(await staking.getAddress()));
+      console.log('stakingBalanceBefore: ', stakingBalanceBefore);
+      console.log('ownerBalanceBefore: ', ownerBalanceBefore);
 
-      expect(await ethers.provider.getBalance(owner)).to.equal(ownerBalanceBefore + 100n); // minus the gas cost
+      const tx = await staking.withdraw(99); // find out gas 
+      // const stakingBalanceAfter = await staking.getUserStake(owner);
+      // console.log('stakingBalanceAfter: ', stakingBalanceAfter);
+
+      const receipt = await tx.wait();
+      // console.log('receipt: ', receipt);
+      const totalCostInWei = receipt.gasUsed * receipt.gasPrice;
+
+      
+      // console.log('tx result:', tx);
+      // console.log("balance:", await ethers.provider.getBalance(await staking.getAddress()));
+
+      const ownerBalanceAfter = await ethers.provider.getBalance(owner);
+      // console.log('ownerBalanceAfter: ', ownerBalanceAfter);
+      // console.log('totalCostInWei: ', totalCostInWei);
+      console.log(`ownerBalanceAfter = ownerBalanceBefore + 99n + totalCostInWei`);
+      console.log(`${ownerBalanceAfter} = ${ownerBalanceBefore} + 99000000000000000000 + ${totalCostInWei}`);
+      
+      const finalAnswer = ownerBalanceBefore + 99n + totalCostInWei;
+      console.log(`${ownerBalanceAfter} = ${finalAnswer}`);
+      expect(ownerBalanceAfter).to.equal(finalAnswer); // minus the gas cost
+
 // bigint
       // expect(await ethers.provider.getBalance(owner)).to./
       // const balanceAfter = staking.getUserStake(owner);

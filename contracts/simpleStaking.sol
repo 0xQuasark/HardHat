@@ -67,7 +67,7 @@ contract Staking is ReentrancyGuard {
     }
     stakedDetails[msg.sender].userStakes -= amount;   // effect
     totalStaked -= amount;                            // effect
-    console.log("Amount:", amount);
+    console.log("Amount to withdraw, totalStaked:", amount, totalStaked);
     // i'd need to add checks and balances (a boolean to show i've already paid, etc..)
     payable(msg.sender).transfer(amount + calculateRewards()); // interaction
 
