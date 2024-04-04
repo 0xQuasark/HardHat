@@ -108,11 +108,6 @@ describe("Staking", function () {
       const finalAnswer = ownerBalanceBefore + 99n + totalCostInWei;
       console.log(`${ownerBalanceAfter} = ${finalAnswer}`);
       expect(ownerBalanceAfter).to.equal(finalAnswer); // minus the gas cost
-
-// bigint
-      // expect(await ethers.provider.getBalance(owner)).to./
-      // const balanceAfter = staking.getUserStake(owner);
-      // expect(await staking.getUserStake(owner)).to.equal(0);
     });
 
     it("Should have SOME my funds withdrawn", async function () {
