@@ -74,17 +74,52 @@ describe("Staking", function () {
         );    
     });
 
-    it("Should have all my funds withdrawn", async function () {
+    it.only("Should have all my funds withdrawn", async function () {
       const { staking, owner } = await loadFixture(deployStakingFixture);
-      await staking.stake({value: 100});
+      const result = await staking.stake({value: 100});
+      // console.log('Staking result:', result); // no gas used 
 
-      await staking.withdraw(0);
-      expect(await staking.getUserStake(owner)).to.equal(0);
+      const WAITING_PERIOD = await staking.WAITING_PERIOD();
+      await time.increase(WAITING_PERIOD); 
+
+      const stakingBalanceBefore = await staking.getUserStake(owner);
+      const ownerBalanceBefore = await ethers.provider.getBalance(owner);
+      // console.log('stakingBalanceBefore: ', stakingBalanceBefore);
+      // console.log('ownerBalanceBefore: ', ownerBalanceBefore);
+
+      const tx = await staking.withdraw(99); // find out gas 
+      // const stakingBalanceAfter = await staking.getUserStake(owner);
+      // console.log('stakingBalanceAfter: ', stakingBalanceAfter);
+
+      const receipt = await tx.wait();
+      // console.log('receipt: ', receipt);
+      const totalCostInWei = receipt.gasUsed * receipt.gasPrice;
+      // console.log('totalCostInWei', totalCostInWei);
+
+      
+      // console.log('tx result:', tx);
+      // console.log("balance:", await ethers.provider.getBalance(await staking.getAddress()));
+
+      const ownerBalanceAfter = await ethers.provider.getBalance(owner);
+      // console.log('ownerBalanceAfter: ', ownerBalanceAfter);
+      // console.log('totalCostInWei: ', totalCostInWei);
+      // console.log(`ownerBalanceAfter = ownerBalanceBefore + 99n + totalCostInWei`);
+      // console.log(`${ownerBalanceAfter} = ${ownerBalanceBefore} + 99000000000000000000 + ${totalCostInWei}`);
+      
+      const rewardAmount = await staking.calculateRewards();
+
+      const finalAnswer = ownerBalanceBefore + 99n - totalCostInWei + rewardAmount; // the 1n is the calculateRewards() in the contract
+      // console.log(`${ownerBalanceAfter} = ${finalAnswer}`);
+      // console.log('diff: ', ownerBalanceAfter - finalAnswer);
+      expect(ownerBalanceAfter).to.equal(finalAnswer); // minus the gas cost
     });
+    
 
     it("Should have SOME my funds withdrawn", async function () {
       const { staking, owner } = await loadFixture(deployStakingFixture);
       await staking.stake({value: 100});
+      const WAITING_PERIOD = await staking.WAITING_PERIOD();
+      await time.increase(WAITING_PERIOD); 
 
       await expect(staking.withdraw(50)).to.emit(
         staking,
@@ -109,7 +144,7 @@ describe("Staking", function () {
       expect(await staking.getUserStake(signers[2])).to.equal(40);
     });
 
-    it.only("Should not allow to withdraw before the waiting period", async function () {
+    it("Should not allow to withdraw before the waiting period", async function () {
       const { staking, owner } = await loadFixture(deployStakingFixture); 
       // Stake some Ether 
       const WAITING_PERIOD = await staking.WAITING_PERIOD();
@@ -126,13 +161,31 @@ describe("Staking", function () {
       await expect(staking.withdraw(10)).not.to.be.reverted;
     });
 
+
   });
 });
 
 
 /*
 Homework
-read about connect in the docs
-play with locking and oly withdrawing after a certain time
+  currently rewards are static
+  how can we have hourly compounded rewards, 
+    from the momemnt of staking (store info when they stake, blocktime stamp)
+    when user withdraws (e.g. 3.5hours) we can do a compounding calc (on hourly basis) to work out how much the reward will be
+    assume interest rate of 10%/hour, if a user stakes 100wei, after the first hour they would get
+
+    (((100 * 1.1) * 1.1) * 1.1) // three times becuase of three hours
+
+    when withdraw, figure out how many hours that is, calc based off
+
+    alter staking.calculateRewards() to make it more interesting
+
+  
+  we're working against eth, let's use a custom ERC20 token
+  change staking contract to work with a custom ERC20.
+    - OZ can help deploy a contract, my staking contract has a reference to the custom
+    - when i do a stake operation in the contract, it'd need to interact with the token contract
+    - look at the API in the OZ contract, explore each contract and see how to get my staking contract to interact
+    
 
 */

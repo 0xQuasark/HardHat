@@ -13,8 +13,13 @@ contract Staking is ReentrancyGuard {
   uint256 public totalStaked;
   uint256 public constant WAITING_PERIOD = 10 minutes;
 
-  mapping(address => uint256) public userStakes;      // mapping to keep trace of who sends what
-  mapping(address => uint256) public stakeTimestamps; // mapping to track time stamps
+  struct userDetails {
+    uint256 userStakes;
+    uint256 stakeTimestamps;
+  }
+
+  mapping(address => userDetails) public stakedDetails;      // mapping to keep trace of who sends what
+
 
   event Staked(address indexed user, uint256 amount);   // event to log the staking
   event Withdrawn (address indexed user, uint256);      // event for the withdrawal
@@ -30,8 +35,8 @@ contract Staking is ReentrancyGuard {
     }
     
     totalStaked += msg.value;
-    userStakes[msg.sender] += msg.value; // apparently 0.8.0 and above it's safe to add like this
-    stakeTimestamps[msg.sender] = block.timestamp;
+    stakedDetails[msg.sender].userStakes += msg.value; // apparently 0.8.0 and above it's safe to add like this
+    stakedDetails[msg.sender].stakeTimestamps = block.timestamp;
 
     emit Staked(msg.sender, msg.value);
   }
@@ -43,28 +48,35 @@ contract Staking is ReentrancyGuard {
   }
 
   function getUserStake(address user) public view returns (uint256) {
-    return userStakes[user];
+    return stakedDetails[user].userStakes;
   }
 
   function withdraw(uint256 amount) external nonReentrant {
-    if (userStakes[msg.sender] < amount) {  // check
+    if (stakedDetails[msg.sender].userStakes < amount) {  // check
       revert InsufficientFundsToWithdraw("You do not have enough funds to withdraw");
     }
 
     // Check if the waiting period has passed
-    if (block.timestamp < stakeTimestamps[msg.sender] + WAITING_PERIOD) {
+    // this could be a function determineTimeEligibility()
+    if (block.timestamp < stakedDetails[msg.sender].stakeTimestamps + WAITING_PERIOD) {
       revert WithdrawalLocked("Withdrawal is locked. Please wait until the waiting period has passed.");
     }
 
-    if (amount == 0) {                      // check
-    amount = userStakes[msg.sender];        // setting amount to the entire balance
+    if (amount == 0) {                                 // check
+      amount = stakedDetails[msg.sender].userStakes;   // setting amount to the entire balance
     }
-    userStakes[msg.sender] -= amount;       // effect
-    totalStaked -= amount;                  // effect
-
-    payable(msg.sender).transfer(amount); // interaction
+    stakedDetails[msg.sender].userStakes -= amount;   // effect
+    totalStaked -= amount;                            // effect
+    // console.log("Amount to withdraw, totalStaked:", amount, totalStaked);
+    // i'd need to add checks and balances (a boolean to show i've already paid, etc..)
+    payable(msg.sender).transfer(amount + calculateRewards()); // interaction
 
     emit Withdrawn(msg.sender, amount);
   }
+
+  function calculateRewards() public pure returns (uint256) {
+    return 1;
+  }
+
 }
 
