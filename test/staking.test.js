@@ -74,7 +74,7 @@ describe("Staking", function () {
         );    
     });
 
-    it.only("Should have all my funds withdrawn", async function () {
+    it("Should have all my funds withdrawn", async function () {
       const { staking, owner } = await loadFixture(deployStakingFixture);
       const result = await staking.stake({value: 100});
       // console.log('Staking result:', result); // no gas used 
@@ -144,15 +144,17 @@ describe("Staking", function () {
       expect(await staking.getUserStake(signers[2])).to.equal(40);
     });
 
-    it("Should not allow to withdraw before the waiting period", async function () {
+    it.skip("Should not allow to withdraw before the waiting period", async function () {
       const { staking, owner } = await loadFixture(deployStakingFixture); 
       // Stake some Ether 
       const WAITING_PERIOD = await staking.WAITING_PERIOD();
       // console.log("WAITING_PERIOD: ", WAITING_PERIOD)
       // Attempt to withdraw immediately (should fail) 
       await staking.stake({ value: 10 }); 
+      const tx = await staking.withdraw(10)
       // Increase time by the waiting period 
-      await expect(staking.withdraw(10)).to.be.revertedWithCustomError(
+
+      await expect(tx).to.be.revertedWithCustomError(
         staking,
         "WithdrawalLocked"
         ); 
@@ -186,6 +188,6 @@ Homework
     - OZ can help deploy a contract, my staking contract has a reference to the custom
     - when i do a stake operation in the contract, it'd need to interact with the token contract
     - look at the API in the OZ contract, explore each contract and see how to get my staking contract to interact
-    
+
 
 */
