@@ -106,7 +106,7 @@ describe("Staking", function () {
       // console.log(`ownerBalanceAfter = ownerBalanceBefore + 99n + totalCostInWei`);
       // console.log(`${ownerBalanceAfter} = ${ownerBalanceBefore} + 99000000000000000000 + ${totalCostInWei}`);
       
-      const rewardAmount = await staking.calculateRewards();
+      const rewardAmount = await staking.calculateRewards(1);
 
       const finalAnswer = ownerBalanceBefore + 99n - totalCostInWei + rewardAmount; // the 1n is the calculateRewards() in the contract
       // console.log(`${ownerBalanceAfter} = ${finalAnswer}`);
@@ -163,6 +163,28 @@ describe("Staking", function () {
       await expect(staking.withdraw(10)).not.to.be.reverted;
     });
 
+    it("Should correctly calculate rewards for 3 hours at 10% hourly rate", async function () {
+      const { staking, owner } = await loadFixture(deployStakingFixture);
+      const result = await staking.stake({value: 100});
+      const stakeAmount = 100; // 100 wei
+      const hourlyRate = 10; // 10% interest rate
+
+      // Stake 100 wei
+      await staking.stake({ value: stakeAmount });
+    
+      // Increase time by 3 hours
+      await time.increase(3 * 3600);
+    
+      // Calculate expected rewards
+      const expectedRewards = (stakeAmount * 331) / 300; // (100 * 1.1^3)
+      
+      // Withdraw and capture the event
+      await expect(staking.withdraw(stakeAmount)).to.emit(
+        staking,
+        "Withdrawn"
+      ).withArgs(owner, stakeAmount + expectedRewards);
+
+    });
 
   });
 });

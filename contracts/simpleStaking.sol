@@ -65,17 +65,36 @@ contract Staking is ReentrancyGuard {
     if (amount == 0) {                                 // check
       amount = stakedDetails[msg.sender].userStakes;   // setting amount to the entire balance
     }
+
+    uint256 stakedRewards = calculateRewards(amount);
+
     stakedDetails[msg.sender].userStakes -= amount;   // effect
     totalStaked -= amount;                            // effect
     // console.log("Amount to withdraw, totalStaked:", amount, totalStaked);
     // i'd need to add checks and balances (a boolean to show i've already paid, etc..)
-    payable(msg.sender).transfer(amount + calculateRewards()); // interaction
+    payable(msg.sender).transfer(amount + stakedRewards); // interaction
+
+    console.log("Withdrawn(%s, %s)", msg.sender, amount);
 
     emit Withdrawn(msg.sender, amount);
   }
 
-  function calculateRewards() public pure returns (uint256) {
-    return 1;
+  function calculateRewards(uint256 amount) public view returns (uint256) {
+    // console.log("sender: ", msg.sender, amount);
+    // console.log("User Stakes: ", stakedDetails[msg.sender].userStakes);
+    // console.log("Stake Timestamps: ", stakedDetails[msg.sender].stakeTimestamps);
+
+    uint256 stakingDuration = block.timestamp - stakedDetails[msg.sender].stakeTimestamps;
+    uint256 hoursStaked = stakingDuration / 3600; // Convert seconds to hours
+    uint256 rewardRate = 10; // 10% reward rate
+    uint256 compoundedAmount = amount;
+
+    for (uint256 i = 0; i < hoursStaked; i++) {
+        compoundedAmount = compoundedAmount * (100 + rewardRate) / 100;
+    }
+    // console.log("Rewards: ", compoundedAmount - amount);
+
+    return uint256 (compoundedAmount - amount); // Return only the rewards
   }
 
 }
