@@ -180,14 +180,12 @@ Homework
 
     when withdraw, figure out how many hours that is, calc based off
 
+
     alter staking.calculateRewards() to make it more interesting
 
-  
   we're working against eth, let's use a custom ERC20 token
   change staking contract to work with a custom ERC20.
     - OZ can help deploy a contract, my staking contract has a reference to the custom
     - when i do a stake operation in the contract, it'd need to interact with the token contract
     - look at the API in the OZ contract, explore each contract and see how to get my staking contract to interact
-
-
 */
