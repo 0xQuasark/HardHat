@@ -149,6 +149,7 @@ describe("Staking", function () {
       // Stake some Ether 
       const WAITING_PERIOD = await staking.WAITING_PERIOD();
       // console.log("WAITING_PERIOD: ", WAITING_PERIOD)
+      
       // Attempt to withdraw immediately (should fail) 
       await staking.stake({ value: 10 }); 
       const tx = await staking.withdraw(10)
