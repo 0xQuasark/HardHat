@@ -2,6 +2,7 @@
 pragma solidity ^0.8.0;
 import "hardhat/console.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import "./myToken.sol";
 
 error MinimumBalanceNotMet(string errorMessage);
 error InsufficientFundsToWithdraw(string errorMessage);
@@ -24,8 +25,12 @@ contract Staking is ReentrancyGuard {
   event Staked(address indexed user, uint256 amount);   // event to log the staking
   event Withdrawn (address indexed user, uint256);      // event for the withdrawal
 
-  constructor() {
+  PDBToken pdbToken;
+
+  constructor(address pdbTokenAddress) {
     totalStaked = 0;
+
+    pdbToken = PDBToken(pdbTokenAddress);
   }
 
   // Function to accept stakes
@@ -33,6 +38,11 @@ contract Staking is ReentrancyGuard {
     if (msg.value == 0 ) {
       revert MinimumBalanceNotMet("You need to stake at least some Ether");
     }
+
+    // TODO: Grab a reference for the PDBToken contract - pdbToken.
+
+    // TODO: Interact with PDBToken to transfer "ownership" to Staking contract.
+    uint256 totalSupply = pdbToken.totalSupply();
     
     totalStaked += msg.value;
     stakedDetails[msg.sender].userStakes += msg.value; // apparently 0.8.0 and above it's safe to add like this
@@ -44,7 +54,7 @@ contract Staking is ReentrancyGuard {
   // Function to check the contract's balance
   // This is equal to the total staked amount if no other Ether transactions occur
   function getContractBalance() public view returns (uint256) {
-    return address(this).balance;
+    return address(this).balance; // use OZ's 
   }
 
   function getUserStake(address user) public view returns (uint256) {
