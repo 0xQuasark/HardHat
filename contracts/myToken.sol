@@ -18,6 +18,7 @@ contract PDBToken is ERC20 {
 ------- after Staking -----
 0xPaul -> 3 PDB
 0xHoward -> 2 PDB
+
 0xStaking -> 2 PDB
 
 instead of using ETH, use PDB
