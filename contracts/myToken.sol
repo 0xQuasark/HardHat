@@ -22,6 +22,8 @@ contract PDBToken is ERC20 {
 0xStaking -> 2 PDB
 
 instead of using ETH, use PDB
+
+
 e.g. payable only refers to ETH, but we're using PDB token
 
 */
