@@ -4,7 +4,7 @@
     "@nomicfoundation/hardhat-ethers": "^3.0.5",
     "@nomicfoundation/hardhat-toolbox": "^4.0.0",
     "@openzeppelin/hardhat-upgrades": "^3.0.5",
-    "ethers": "^6.11.1",
+    "ethers": "^6.12.1",
     "hardhat": "^2.22.3"
   },
   "dependencies": {
