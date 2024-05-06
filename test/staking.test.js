@@ -13,9 +13,11 @@ describe("Staking", function () {
     const [owner, otherAccount ] = signers; // owner is sometimes called deployer
 
     const Staking = await ethers.getContractFactory("Staking");
-    const staking = await Staking.deploy();
+    const PDBToken = await ethers.getContractFactory("PDBToken");
+    const pdbToken = await PDBToken.deploy(initialSupply);
+    const staking = await Staking.deploy(pdbToken.address);
 
-    return { staking, owner, otherAccount, signers };
+    return { staking, owner, otherAccount, signers, pdbToken };
   }
 
   describe("Deployment", function () {
@@ -164,29 +166,21 @@ describe("Staking", function () {
       await expect(staking.withdraw(10)).not.to.be.reverted;
     });
 
+    it("Should stake PDB tokens successfully", async function () {
+      const { staking, owner, pdbToken } = await loadFixture(deployStakingFixture);
+      const stakeAmount = ethers.utils.parseUnits("100", 18);
 
+      // Owner approves the staking contract to spend tokens
+      await pdbToken.connect(owner).approve(staking.address, stakeAmount);
+
+      // Perform the stake operation
+      await expect(staking.connect(owner).stake(stakeAmount))
+          .to.emit(staking, "Staked")
+          .withArgs(owner.address, stakeAmount);
+
+      // Check the staked balance
+      expect(await staking.getUserStake(owner.address)).to.equal(stakeAmount);
+    });
   });
 });
 
-
-/*
-Homework
-  currently rewards are static
-  how can we have hourly compounded rewards, 
-    from the momemnt of staking (store info when they stake, blocktime stamp)
-    when user withdraws (e.g. 3.5hours) we can do a compounding calc (on hourly basis) to work out how much the reward will be
-    assume interest rate of 10%/hour, if a user stakes 100wei, after the first hour they would get
-
-    (((100 * 1.1) * 1.1) * 1.1) // three times becuase of three hours
-
-    when withdraw, figure out how many hours that is, calc based off
-
-
-    alter staking.calculateRewards() to make it more interesting
-
-  we're working against eth, let's use a custom ERC20 token
-  change staking contract to work with a custom ERC20.
-    - OZ can help deploy a contract, my staking contract has a reference to the custom
-    - when i do a stake operation in the contract, it'd need to interact with the token contract
-    - look at the API in the OZ contract, explore each contract and see how to get my staking contract to interact
-*/
