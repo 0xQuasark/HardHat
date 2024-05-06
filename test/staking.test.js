@@ -179,6 +179,8 @@ describe.only("PDB Token", function () {
     const stakeAmount = ethers.parseUnits("100", 18);
 
     // Owner approves the staking contract to spend tokens
+    // check out how _approve works on ERC20.sol (https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC20/ERC20.sol#L280)
+
     await pdbToken.connect(owner).approve(await staking.getAddress(), stakeAmount);
 
     // Perform the stake operation

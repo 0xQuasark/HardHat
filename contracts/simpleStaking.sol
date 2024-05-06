@@ -39,7 +39,7 @@ contract Staking is ReentrancyGuard {
     require(pdbToken.allowance(msg.sender, address(this)) >= amount, "Stake request exceeds allowance");
     pdbToken.transferFrom(msg.sender, address(this), amount);
 
-    totalStaked += amount;
+    totalStaked += amount;    // i could also use balanceOf in future, so this might not be super useful
     stakedDetails[msg.sender].userStakes += amount;
     stakedDetails[msg.sender].stakeTimestamps = block.timestamp;
 
