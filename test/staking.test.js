@@ -4,22 +4,26 @@ const {
 } = require("@nomicfoundation/hardhat-toolbox/network-helpers");
 const { anyValue } = require("@nomicfoundation/hardhat-chai-matchers/withArgs");
 const { expect } = require("chai");
+// const { ethers } = require("hardhat");
+
+
+async function deployStakingFixture() {
+  // Contracts are deployed using the first signer/account by default
+  const signers = await ethers.getSigners();
+  // const [owner, otherAccount] = await ethers.getSigners();
+  const [owner, otherAccount ] = signers; // owner is sometimes called deployer
+  
+  const Staking = await ethers.getContractFactory("Staking");
+  const PDBToken = await ethers.getContractFactory("PDBToken");
+  const pdbToken = await PDBToken.deploy(ethers.parseUnits("1000000", 18));
+  const newAddress = await pdbToken.getAddress();
+  console.log("new address: ", newAddress);
+  const staking = await Staking.deploy(newAddress);
+
+  return { staking, owner, otherAccount, signers, pdbToken };
+}
 
 describe("Staking", function () {
-  async function deployStakingFixture() {
-    // Contracts are deployed using the first signer/account by default
-    const signers = await ethers.getSigners();
-    // const [owner, otherAccount] = await ethers.getSigners();
-    const [owner, otherAccount ] = signers; // owner is sometimes called deployer
-
-    const Staking = await ethers.getContractFactory("Staking");
-    const PDBToken = await ethers.getContractFactory("PDBToken");
-    const pdbToken = await PDBToken.deploy(initialSupply);
-    const staking = await Staking.deploy(pdbToken.address);
-
-    return { staking, owner, otherAccount, signers, pdbToken };
-  }
-
   describe("Deployment", function () {
     it("Should set the right unlockTime", async function () {
       const { staking } = await loadFixture(deployStakingFixture);
@@ -166,21 +170,24 @@ describe("Staking", function () {
       await expect(staking.withdraw(10)).not.to.be.reverted;
     });
 
-    it("Should stake PDB tokens successfully", async function () {
-      const { staking, owner, pdbToken } = await loadFixture(deployStakingFixture);
-      const stakeAmount = ethers.utils.parseUnits("100", 18);
+  });
+});
 
-      // Owner approves the staking contract to spend tokens
-      await pdbToken.connect(owner).approve(staking.address, stakeAmount);
+describe.only("PDB Token", function () {
+  it("Should stake PDB tokens successfully", async function () {
+    const { staking, owner, pdbToken } = await loadFixture(deployStakingFixture);
+    const stakeAmount = ethers.parseUnits("100", 18);
 
-      // Perform the stake operation
-      await expect(staking.connect(owner).stake(stakeAmount))
-          .to.emit(staking, "Staked")
-          .withArgs(owner.address, stakeAmount);
+    // Owner approves the staking contract to spend tokens
+    await pdbToken.connect(owner).approve(await staking.getAddress(), stakeAmount);
 
-      // Check the staked balance
-      expect(await staking.getUserStake(owner.address)).to.equal(stakeAmount);
-    });
+    // Perform the stake operation
+    await expect(staking.connect(owner).stake(stakeAmount))
+        .to.emit(staking, "Staked")
+        .withArgs(await owner.getAddress(), stakeAmount);
+
+    // Check the staked balance
+    expect(await staking.getUserStake(owner.address)).to.equal(stakeAmount);
   });
 });
 
