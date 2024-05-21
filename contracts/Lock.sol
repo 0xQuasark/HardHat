@@ -8,8 +8,8 @@ pragma solidity ^0.8.0;
 contract Lock {
     uint public unlockTime;
     address payable public owner;
-
-    // emits an event when the contract is deployed
+   
+    // emits an event wh en the contract is deployed
     event Withdrawal(uint amount, uint when);
 
     constructor(uint _unlockTime) payable {
