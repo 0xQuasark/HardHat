@@ -13,6 +13,7 @@ contract PDBToken is ERC20 {
 /**
 ------- before Staking -----
 0xPaul -> 3 PDB
+0xx
 0xHoward -> 4 PDB
 
 ------- after Staking -----
