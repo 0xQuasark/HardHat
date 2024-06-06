@@ -4,20 +4,26 @@ const {
 } = require("@nomicfoundation/hardhat-toolbox/network-helpers");
 const { anyValue } = require("@nomicfoundation/hardhat-chai-matchers/withArgs");
 const { expect } = require("chai");
+// const { ethers } = require("hardhat");
+
+
+async function deployStakingFixture() {
+  // Contracts are deployed using the first signer/account by default
+  const signers = await ethers.getSigners();
+  // const [owner, otherAccount] = await ethers.getSigners();
+  const [owner, otherAccount ] = signers; // owner is sometimes called deployer
+  
+  const Staking = await ethers.getContractFactory("Staking");
+  const PDBToken = await ethers.getContractFactory("PDBToken");
+  const pdbToken = await PDBToken.deploy(ethers.parseUnits("1000000", 18));
+  const newAddress = await pdbToken.getAddress();
+  console.log("new address: ", newAddress);
+  const staking = await Staking.deploy(newAddress);
+
+  return { staking, owner, otherAccount, signers, pdbToken };
+}
 
 describe("Staking", function () {
-  async function deployStakingFixture() {
-    // Contracts are deployed using the first signer/account by default
-    const signers = await ethers.getSigners();
-    // const [owner, otherAccount] = await ethers.getSigners();
-    const [owner, otherAccount ] = signers; // owner is sometimes called deployer
-
-    const Staking = await ethers.getContractFactory("Staking");
-    const staking = await Staking.deploy();
-
-    return { staking, owner, otherAccount, signers };
-  }
-
   describe("Deployment", function () {
     it("Should set the right unlockTime", async function () {
       const { staking } = await loadFixture(deployStakingFixture);
@@ -164,29 +170,26 @@ describe("Staking", function () {
       await expect(staking.withdraw(10)).not.to.be.reverted;
     });
 
-
   });
 });
 
+describe.only("PDB Token", function () {
+  it("Should stake PDB tokens successfully", async function () {
+    const { staking, owner, pdbToken } = await loadFixture(deployStakingFixture);
+    const stakeAmount = ethers.parseUnits("100", 18);
 
-/*
-Homework
-  currently rewards are static
-  how can we have hourly compounded rewards, 
-    from the momemnt of staking (store info when they stake, blocktime stamp)
-    when user withdraws (e.g. 3.5hours) we can do a compounding calc (on hourly basis) to work out how much the reward will be
-    assume interest rate of 10%/hour, if a user stakes 100wei, after the first hour they would get
+    // Owner approves the staking contract to spend tokens
+    // check out how _approve works on ERC20.sol (https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC20/ERC20.sol#L280)
 
-    (((100 * 1.1) * 1.1) * 1.1) // three times becuase of three hours
+    await pdbToken.connect(owner).approve(await staking.getAddress(), stakeAmount);
 
-    when withdraw, figure out how many hours that is, calc based off
+    // Perform the stake operation
+    await expect(staking.connect(owner).stake(stakeAmount))
+        .to.emit(staking, "Staked")
+        .withArgs(await owner.getAddress(), stakeAmount);
 
+    // Check the staked balance
+    expect(await staking.getUserStake(owner.address)).to.equal(stakeAmount);
+  });
+});
 
-    alter staking.calculateRewards() to make it more interesting
-
-  we're working against eth, let's use a custom ERC20 token
-  change staking contract to work with a custom ERC20.
-    - OZ can help deploy a contract, my staking contract has a reference to the custom
-    - when i do a stake operation in the contract, it'd need to interact with the token contract
-    - look at the API in the OZ contract, explore each contract and see how to get my staking contract to interact
-*/

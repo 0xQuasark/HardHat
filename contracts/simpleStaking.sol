@@ -3,6 +3,7 @@ pragma solidity ^0.8.0;
 import "hardhat/console.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "./myToken.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 error MinimumBalanceNotMet(string errorMessage);
 error InsufficientFundsToWithdraw(string errorMessage);
@@ -25,30 +26,24 @@ contract Staking is ReentrancyGuard {
   event Staked(address indexed user, uint256 amount);   // event to log the staking
   event Withdrawn (address indexed user, uint256);      // event for the withdrawal
 
-  PDBToken pdbToken;
+  IERC20 pdbToken;
 
   constructor(address pdbTokenAddress) {
+    pdbToken = IERC20(pdbTokenAddress);
     totalStaked = 0;
-
-    pdbToken = PDBToken(pdbTokenAddress);
   }
 
   // Function to accept stakes
-  function stake() external payable {
-    if (msg.value == 0 ) {
-      revert MinimumBalanceNotMet("You need to stake at least some Ether");
-    }
+  function stake(uint256 amount) external {
+    require(amount > 0, "You need to stake at least some tokens");
+    require(pdbToken.allowance(msg.sender, address(this)) >= amount, "Stake request exceeds allowance");
+    pdbToken.transferFrom(msg.sender, address(this), amount);
 
-    // TODO: Grab a reference for the PDBToken contract - pdbToken.
-
-    // TODO: Interact with PDBToken to transfer "ownership" to Staking contract.
-    uint256 totalSupply = pdbToken.totalSupply();
-    
-    totalStaked += msg.value;
-    stakedDetails[msg.sender].userStakes += msg.value; // apparently 0.8.0 and above it's safe to add like this
+    totalStaked += amount;    // i could also use balanceOf in future, so this might not be super useful
+    stakedDetails[msg.sender].userStakes += amount;
     stakedDetails[msg.sender].stakeTimestamps = block.timestamp;
 
-    emit Staked(msg.sender, msg.value);
+    emit Staked(msg.sender, amount);
   }
 
   // Function to check the contract's balance
@@ -62,24 +57,12 @@ contract Staking is ReentrancyGuard {
   }
 
   function withdraw(uint256 amount) external nonReentrant {
-    if (stakedDetails[msg.sender].userStakes < amount) {  // check
-      revert InsufficientFundsToWithdraw("You do not have enough funds to withdraw");
-    }
+    require(stakedDetails[msg.sender].userStakes >= amount, "Insufficient funds to withdraw");
+    require(block.timestamp >= stakedDetails[msg.sender].stakeTimestamps + WAITING_PERIOD, "Withdrawal is locked. Please wait until the waiting period has passed.");
 
-    // Check if the waiting period has passed
-    // this could be a function determineTimeEligibility()
-    if (block.timestamp < stakedDetails[msg.sender].stakeTimestamps + WAITING_PERIOD) {
-      revert WithdrawalLocked("Withdrawal is locked. Please wait until the waiting period has passed.");
-    }
-
-    if (amount == 0) {                                 // check
-      amount = stakedDetails[msg.sender].userStakes;   // setting amount to the entire balance
-    }
-    stakedDetails[msg.sender].userStakes -= amount;   // effect
-    totalStaked -= amount;                            // effect
-    // console.log("Amount to withdraw, totalStaked:", amount, totalStaked);
-    // i'd need to add checks and balances (a boolean to show i've already paid, etc..)
-    payable(msg.sender).transfer(amount + calculateRewards()); // interaction
+    stakedDetails[msg.sender].userStakes -= amount;
+    totalStaked -= amount;
+    pdbToken.transfer(msg.sender, amount);
 
     emit Withdrawn(msg.sender, amount);
   }
@@ -89,4 +72,3 @@ contract Staking is ReentrancyGuard {
   }
 
 }
-
